@@ -136,6 +136,17 @@
       animation-timing-function: linear;
     }
 
+    .pi-final {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      width: 100px;
+      height: 100px;
+      transform: translate(-50%, -50%) scale(1);
+      pointer-events: none;
+      z-index: 9999;
+    }
+
   </style>
 </head>
 <body>
@@ -232,6 +243,7 @@
     bonusBgm.currentTime = 0;
     bonusBgm.play();
 
+    let finalPi = null;
     const piElements = [];
     const count = Math.floor(Math.random() * 6) + 18; // 18〜23個
     const duration = 22000; // 20秒
@@ -275,6 +287,11 @@
     setTimeout(() => {
       piElements.forEach(pi => pi.remove());
 
+      if (finalPi) {
+        finalPi.remove();
+        finalPi = null;
+      }
+      
       bonusBgm.pause();
       bonusBgm.currentTime = 0;
 
@@ -283,6 +300,23 @@
       helpButton.disabled = false;
       nipporiButton.disabled = false;
     }, duration);
+
+    setTimeout(() => {
+      finalPi = document.createElement('img');
+      finalPi.src = 'resources/img/pi.png';
+      finalPi.className = 'pi-final';
+
+      document.body.appendChild(finalPi);
+
+      finalPi.animate([
+        { transform: 'translate(-50%, -50%) scale(1)' },
+        { transform: 'translate(-50%, -50%) scale(12)' }
+      ], {
+        duration: 5000,
+        easing: 'ease-in',
+        fill: 'forwards'
+      });
+    }, 15000);
   });
 </script>
 
