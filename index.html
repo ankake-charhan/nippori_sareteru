@@ -127,6 +127,15 @@
       box-shadow: 0 1px 0 rgba(0,0,0,0.3);
     }
 
+    .pi {
+      position: fixed;
+      width: 150px;
+      height: 150px;
+      pointer-events: none;
+      will-change: transform;
+      animation-timing-function: linear;
+    }
+
   </style>
 </head>
 <body>
@@ -140,14 +149,23 @@
     <div class="note">※音は鳴りません</div>
 
     <div class="buttons">
-      <button class="btn-help">助けて！</button>
-      <button class="btn-nippori">にっぽりされていませんか？</button>
+      <button id="helpButton" class="btn-help">助けて！</button>
+      <button id="nipporiButton" class="btn-nippori">にっぽりされていませんか？</button>
     </div>
   </div>
 
 </body>
 </html>
 <script>
+  let isBusy = false; // 全体ロック用
+  const helpButton = document.getElementById('helpButton');
+  const nipporiButton = document.getElementById('nipporiButton');
+  const bonusBgm = new Audio('resources/sounds/bonus_sound.wav');
+  const alertSound = new Audio('resources/sounds/emergency_alert_strong.wav');
+  const voiceSound = new Audio('resources/sounds/nippori_help_voice.mp3');
+  bonusBgm.loop = true;
+
+  //　button押下時アニメ
   document.querySelectorAll('button').forEach(btn => {
     btn.addEventListener('touchstart', () => {
       btn.classList.add('pressed');
@@ -161,4 +179,110 @@
       btn.classList.remove('pressed');
     });
   });
+
+  // 助けて押下時
+  let isPlaying = false;
+
+  helpButton.addEventListener('click', async () => {
+    if (isBusy) return;
+
+    isBusy = true;
+    helpButton.disabled = true;
+    nipporiButton.disabled = true;
+
+    try {
+      const alertSound = new Audio('resources/sounds/emergency_alert_strong.wav');
+      const voiceSound = new Audio('resources/sounds/nippori_help_voice.mp3');
+
+      alertSound.currentTime = 0;
+      await alertSound.play();
+
+      alertSound.onended = async () => {
+        voiceSound.currentTime = 0;
+        await voiceSound.play();
+
+        voiceSound.onended = () => {
+          isBusy = false;
+          helpButton.disabled = false;
+          nipporiButton.disabled = false;
+        };
+      };
+    } catch (e) {
+      isBusy = false;
+      helpButton.disabled = false;
+      nipporiButton.disabled = false;
+    }
+  });
+
+  // にっぽりされてませんか押下時
+  let nipporiRunning = false;
+
+  nipporiButton.addEventListener('click', () => {
+    if (isBusy) return;
+
+    isBusy = true;
+    helpButton.disabled = true;
+    nipporiButton.disabled = true;
+
+    if (nipporiRunning) return;
+
+    nipporiRunning = true;
+    nipporiButton.disabled = true;
+
+    bonusBgm.currentTime = 0;
+    bonusBgm.play();
+
+    const piElements = [];
+    const count = Math.floor(Math.random() * 6) + 18; // 18〜23個
+    const duration = 22000; // 20秒
+
+    for (let i = 0; i < count; i++) {
+      const pi = document.createElement('img');
+      pi.src = 'resources/img/pi.png';
+      pi.className = 'pi';
+
+      const startX = Math.random() * window.innerWidth;
+      const startY = Math.random() * window.innerHeight;
+
+      pi.style.left = `${startX}px`;
+      pi.style.top = `${startY}px`;
+
+      const scaleStart = Math.random() * 0.7 + 0.5;
+      const scaleEnd = Math.random() * 1.5 + 0.5;
+      const rotateStart = Math.random() * 360;
+      const rotateEnd = rotateStart + (Math.random() * 720 - 360);
+
+      const moveX = Math.random() * 300 - 150;
+      const moveY = Math.random() * 300 - 150;
+
+      pi.animate([
+        {
+          transform: `translate(0,0) scale(${scaleStart}) rotate(${rotateStart}deg)`
+        },
+        {
+          transform: `translate(${moveX}px, ${moveY}px) scale(${scaleEnd}) rotate(${rotateEnd}deg)`
+        }
+      ], {
+        duration: Math.random() * 3000 + 2000,
+        iterations: Infinity,
+        direction: 'alternate'
+      });
+
+      document.body.appendChild(pi);
+      piElements.push(pi);
+    }
+
+    setTimeout(() => {
+      piElements.forEach(pi => pi.remove());
+
+      bonusBgm.pause();
+      bonusBgm.currentTime = 0;
+
+      nipporiRunning = false;
+      isBusy = false;
+      helpButton.disabled = false;
+      nipporiButton.disabled = false;
+    }, duration);
+  });
 </script>
+
