@@ -4,6 +4,19 @@
   <meta charset="UTF-8">
   <title>日暮里されていませんか？</title>
 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#000000">
+
+  <!-- iOS用 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="日暮里">
+
+  <link rel="apple-touch-icon" href="icon.png">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@700;900&display=swap" rel="stylesheet">
@@ -15,19 +28,22 @@
       color: #fff;
       font-family: 'Noto Sans JP', sans-serif;
       height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      align-items: center;
+      overflow: hidden;
+    }
+
+    .container {
+      position: relative;
+      height: 100vh;
+      width: 100%;
     }
 
     .main {
-      flex: 1;
+      position: absolute;
+      top: 12vh;
+      width: 100%;
       display: flex;
       justify-content: center;
-      gap: 40px;
-      padding-top: 40px;
-      align-items: flex-start;
+      gap: 32px;
     }
 
     .vertical {
@@ -38,73 +54,77 @@
 
     .title {
       color: #d6d000;
-      font-size: 64px;
+      font-size: clamp(48px, 10vw, 64px);
       font-weight: 900;
     }
 
     .subtitle {
-      font-size: 28px;
+      font-size: clamp(22px, 5vw, 28px);
       font-weight: 700;
     }
 
     .note {
+      position: absolute;
+      bottom: calc(72px + env(safe-area-inset-bottom));
+      width: 100%;
+      text-align: center;
       font-size: 12px;
-      margin-bottom: 10px;
+      opacity: 0.8;
     }
 
     .buttons {
+      position: fixed;
+      bottom: calc(16px + env(safe-area-inset-bottom));
       width: 100%;
       display: flex;
       justify-content: space-around;
-      padding: 10px 0 20px;
+      padding: 0 12px;
       box-sizing: border-box;
     }
 
     button {
-      padding: 12px 24px;
-      font-size: 16px;
+      min-width: 140px;
+      padding: 12px 16px;
+      font-size: 15px;
       font-weight: 700;
       border-radius: 4px;
       cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+      box-shadow: 0 4px 0 rgba(0,0,0,0.4);
     }
 
-    /* 助けて！ボタン */
+    button:active {
+      transform: translateY(3px) scale(0.97);
+      box-shadow: 0 1px 0 rgba(0,0,0,0.3);
+    }
+
     .btn-help {
       background-color: #fff;
       color: #e60000;
       border: 2px solid #e60000;
     }
 
-    /* にっぽりボタン */
     .btn-nippori {
       background-color: #e60000;
       color: #fff;
       border: none;
     }
-
-    button:hover {
-      opacity: 0.85;
-    }
   </style>
 </head>
 <body>
 
-  <div class="main">
-    <div class="vertical subtitle">
-      されていませんか？
+  <div class="container">
+    <div class="main">
+      <div class="vertical subtitle">されていませんか？</div>
+      <div class="vertical title">日暮里</div>
     </div>
-    <div class="vertical title">
-      日暮里
+
+    <div class="note">※音は鳴りません</div>
+
+    <div class="buttons">
+      <button class="btn-help">助けて！</button>
+      <button class="btn-nippori">にっぽりされていませんか？</button>
     </div>
-  </div>
-
-  <div class="note">
-    ※音は鳴りません
-  </div>
-
-  <div class="buttons">
-    <button class="btn-help">助けて！</button>
-    <button class="btn-nippori">にっぽり<br/>されていませんか？</button>
   </div>
 
 </body>
