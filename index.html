@@ -54,12 +54,12 @@
 
     .title {
       color: #d6d000;
-      font-size: clamp(48px, 10vw, 64px);
+      font-size: clamp(60px, 10vw, 64px);
       font-weight: 900;
     }
 
     .subtitle {
-      font-size: clamp(22px, 5vw, 28px);
+      font-size: clamp(38px, 7vw, 48px);
       font-weight: 700;
     }
 
@@ -109,6 +109,24 @@
       color: #fff;
       border: none;
     }
+
+    button {
+      min-width: 140px;
+      padding: 12px 16px;
+      font-size: 15px;
+      font-weight: 700;
+      border-radius: 4px;
+      cursor: pointer;
+
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+      box-shadow: 0 4px 0 rgba(0,0,0,0.4);
+    }
+
+    button.pressed {
+      transform: translateY(3px) scale(0.97);
+      box-shadow: 0 1px 0 rgba(0,0,0,0.3);
+    }
+
   </style>
 </head>
 <body>
@@ -129,3 +147,18 @@
 
 </body>
 </html>
+<script>
+  document.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('touchstart', () => {
+      btn.classList.add('pressed');
+    });
+
+    btn.addEventListener('touchend', () => {
+      btn.classList.remove('pressed');
+    });
+
+    btn.addEventListener('touchcancel', () => {
+      btn.classList.remove('pressed');
+    });
+  });
+</script>
