@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>日暮里されていませんか？</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@700;900&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      background-color: #000;
+      color: #fff;
+      font-family: 'Noto Sans JP', sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .main {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      padding-top: 40px;
+      align-items: flex-start;
+    }
+
+    .vertical {
+      writing-mode: vertical-rl;
+      text-orientation: upright;
+      letter-spacing: 0.15em;
+    }
+
+    .title {
+      color: #d6d000;
+      font-size: 64px;
+      font-weight: 900;
+    }
+
+    .subtitle {
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .note {
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+
+    .buttons {
+      width: 100%;
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 0 20px;
+      box-sizing: border-box;
+    }
+
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: 700;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    /* 助けて！ボタン */
+    .btn-help {
+      background-color: #fff;
+      color: #e60000;
+      border: 2px solid #e60000;
+    }
+
+    /* にっぽりボタン */
+    .btn-nippori {
+      background-color: #e60000;
+      color: #fff;
+      border: none;
+    }
+
+    button:hover {
+      opacity: 0.85;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="main">
+    <div class="vertical subtitle">
+      されていませんか？
+    </div>
+    <div class="vertical title">
+      日暮里
+    </div>
+  </div>
+
+  <div class="note">
+    ※音は鳴りません
+  </div>
+
+  <div class="buttons">
+    <button class="btn-help">助けて！</button>
+    <button class="btn-nippori">にっぽり<br/>されていませんか？</button>
+  </div>
+
+</body>
+</html>
