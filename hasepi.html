@@ -124,6 +124,7 @@ document.querySelector(".back-link").addEventListener("click",event=>{
  window.parent.postMessage({type:"hasepi",action:"back"},"*");
 });
 let pull=0,vel=0,drag=false,startY=0,last=performance.now(),S=1,OX=0,OY=0,fx=false,fxUntil=0,pendingHit=false,hadPull=false;
+const MIN_PULL_SCREEN_PX=10;
 
 function resize(){
   let dpr=Math.min(devicePixelRatio||1,2);
@@ -155,15 +156,20 @@ cv.addEventListener("pointerdown",e=>{
 },{passive:false});
 cv.addEventListener("pointermove",e=>{
  e.preventDefault();if(!drag)return;
- pull=Math.max(0,Math.min(300,point(e).y-startY));if(pull>8)hadPull=true;draw();
+ const distance=point(e).y-startY;
+ // Measure in screen pixels so a small finger wobble is not a drag on mobile.
+ if(distance*S>=MIN_PULL_SCREEN_PX)hadPull=true;
+ pull=hadPull?Math.max(0,Math.min(300,distance)):0;
+ draw();
 },{passive:false});
 function release(e){
  if(!drag)return;
  drag=false;
- pendingHit=hadPull&&(Math.floor(Math.random()*16)===0);
+ const didPull=hadPull&&(!e||e.type!=="pointercancel");
+ pendingHit=didPull&&(Math.floor(Math.random()*16)===0);
  // Stop the previous bounce sound before deciding which effect to play.
  stopSound(boyonSound);
- if(hadPull&&!pendingHit){
+ if(didPull&&!pendingHit){
    playSound(boyonSound);
  }
  hadPull=false;
