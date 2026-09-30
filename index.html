@@ -33,7 +33,6 @@
     }
     #menuStatus { max-width: 240px; font-size: 13px; }
     .site-menu {
-      display: none; /* 公開時にこの行を削除してメニューを表示 */
       position: fixed;
       top: calc(12px + env(safe-area-inset-top));
       left: calc(12px + env(safe-area-inset-left));
@@ -255,6 +254,7 @@
   // Keep this element in the top document for both activation and effect playback.
   const hasepiAudio = new Audio(silentSoundUrl);
   hasepiAudio.preload = 'auto';
+  const hasepiPreloads = [];
   let hasepiOpening = false;
   let currentHasepiSound = null;
   let hasepiPlaybackVersion = 0;
@@ -291,6 +291,17 @@
     hasepiAudio.muted = false;
     hasepiAudio.play().then(() => {
       stopHasepiSound();
+      // Start loading both effects together when opening the screen.
+      // These elements only preload; the activated element handles all playback.
+      if (hasepiPreloads.length === 0) {
+        for (const url of Object.values(hasepiSoundUrls)) {
+          const audio = new Audio();
+          audio.preload = 'auto';
+          audio.src = url;
+          audio.load();
+          hasepiPreloads.push(audio);
+        }
+      }
       hasepiAudio.src = hasepiSoundUrls.boyon;
       hasepiAudio.load();
       hasepiFrame.src = 'hasepi.html?embedded=1';
