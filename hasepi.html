@@ -97,31 +97,67 @@ const boyonSound=new Audio("resources/sounds/boyon.wav");
 boyonSound.preload="auto";
 const gakoSound=new Audio("resources/sounds/gako.wav");
 gakoSound.preload="auto";
-let tapStart=null,tapMoved=false,gakoPrimed=false,gakoPriming=false;
+let tapStart=null,tapMoved=false;
+const audioStates=new Map([boyonSound,gakoSound].map(sound=>[sound,{primed:false,priming:false,version:0}]));
 
-function primeGako(){
- if(gakoPrimed||gakoPriming)return;
- gakoPriming=true;
- gakoSound.muted=true;
- // Start this element within the same real click as the audible tap sound.
- gakoSound.play().then(()=>{
-   gakoPrimed=true;
-   if(gakoSound.muted){
-     gakoSound.pause();
-     gakoSound.currentTime=0;
-   }
- }).catch(error=>console.warn("gako.wav initialization failed:",error))
- .finally(()=>{gakoSound.muted=false;gakoPriming=false;});
+function primeSound(sound){
+ const state=audioStates.get(sound);
+ if(state.primed||state.priming||!sound.paused)return;
+ state.priming=true;
+ const version=++state.version;
+ sound.muted=true;
+ // Start silently inside the initial touch, before dragging or animation.
+ sound.play().then(()=>{
+   if(state.version!==version)return;
+   state.primed=true;
+   sound.pause();
+   sound.currentTime=0;
+ }).catch(error=>{
+   if(state.version===version)console.warn("Sound initialization failed:",sound.src,error);
+ }).finally(()=>{
+   if(state.version!==version)return;
+   sound.muted=false;
+   state.priming=false;
+ });
 }
+
+function prepareSounds(){
+ primeSound(boyonSound);
+ primeSound(gakoSound);
+}
+
+function stopSound(sound){
+ const state=audioStates.get(sound);
+ // Invalidate pending preparation callbacks so they cannot stop real playback.
+ state.version++;
+ state.priming=false;
+ sound.pause();
+ sound.currentTime=0;
+ sound.muted=false;
+}
+
+function playSound(sound){
+ stopSound(sound);
+ const state=audioStates.get(sound),version=state.version;
+ sound.play().then(()=>{
+   if(state.version===version)state.primed=true;
+ }).catch(error=>{
+   if(state.version===version)console.warn("Sound playback failed:",sound.src,error);
+ });
+}
+
+cv.addEventListener("touchstart",e=>{
+ const touch=e.changedTouches[0];
+ if(touch&&!fx&&hit(point(touch)))prepareSounds();
+},{passive:true});
 
 cv.addEventListener("click",()=>{
  const isTap=tapStart&&!tapMoved;
  tapStart=null;
  if(!isTap||fx||pendingHit)return;
  // Like index.html, play directly in a click handler, without awaiting anything.
- primeGako();
- boyonSound.currentTime=0;
- boyonSound.play().catch(error=>console.warn("boyon.wav tap playback failed:",error));
+ prepareSounds();
+ playSound(boyonSound);
 });
 let pull=0,vel=0,drag=false,startY=0,last=performance.now(),S=1,OX=0,OY=0,fx=false,fxUntil=0,pendingHit=false,hadPull=false;
 
@@ -152,6 +188,7 @@ function hit(q){
 cv.addEventListener("pointerdown",e=>{
  tapStart={x:e.clientX,y:e.clientY};tapMoved=false;
  let q=point(e);
+ if(!fx&&hit(q)&&e.pointerType!=="touch")prepareSounds();
  if(!fx && hit(q)){drag=true;startY=q.y;pull=0;vel=0;hadPull=false;try{cv.setPointerCapture(e.pointerId)}catch(_){}}
 },{passive:false});
 cv.addEventListener("pointermove",e=>{
@@ -165,11 +202,10 @@ function release(e){
  drag=false;
  pendingHit=hadPull&&(Math.floor(Math.random()*16)===0);
  // Stop the previous bounce sound before deciding which effect to play.
- boyonSound.pause();
- boyonSound.currentTime=0;
+ stopSound(boyonSound);
  if(hadPull&&!pendingHit){
    tapMoved=true;
-   boyonSound.play().catch(error=>console.warn("boyon.wav drag playback failed:",error));
+   playSound(boyonSound);
  }
  hadPull=false;
 }
@@ -184,9 +220,7 @@ function startFx(t){
  // Start the recovery timer first, so even a visual-effect error cannot lock the app.
  fxTimer=setTimeout(stopFx,5000);
  cv.style.filter="invert(1)";
- gakoSound.muted=false;
- gakoSound.currentTime=0;
- gakoSound.play().catch(error=>console.warn("gako.wav playback failed:",error));
+ playSound(gakoSound);
  if(eyes)eyes.style.display="block";
  draw();
 }
