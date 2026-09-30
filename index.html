@@ -22,6 +22,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@700;900&display=swap" rel="stylesheet">
 
   <style>
+    #hasepiFrame {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #000;
+      z-index: 10001;
+    }
+    #menuStatus { max-width: 240px; font-size: 13px; }
     .site-menu {
       position: fixed;
       top: calc(12px + env(safe-area-inset-top));
@@ -200,8 +210,9 @@
   <details class="site-menu">
     <summary>メニュー</summary>
     <nav aria-label="ページメニュー">
-      <a href="hasepi.html">はせぴー</a>
+      <a id="hasepiLink" href="hasepi.html">はせぴー</a>
     </nav>
+    <p id="menuStatus" role="status" hidden></p>
   </details>
 
   <div class="container">
@@ -218,6 +229,7 @@
     </div>
   </div>
 
+  <iframe id="hasepiFrame" title="はせぴー" hidden></iframe>
 </body>
 </html>
 <script>
@@ -228,6 +240,94 @@
   const alertSound = new Audio('resources/sounds/emergency_alert_strong.wav');
   const voiceSound = new Audio('resources/sounds/nippori_help_voice.mp3');
   bonusBgm.loop = true;
+
+  const hasepiLink = document.getElementById('hasepiLink');
+  const hasepiFrame = document.getElementById('hasepiFrame');
+  const siteMenu = document.querySelector('.site-menu');
+  const topPage = document.querySelector('.container');
+  const menuStatus = document.getElementById('menuStatus');
+  const silentSoundUrl = 'resources/sounds/silence.wav';
+  const hasepiSoundUrls = {
+    boyon: 'resources/sounds/boyon.wav',
+    gako: 'resources/sounds/gako.wav'
+  };
+  // Keep this element in the top document for both activation and effect playback.
+  const hasepiAudio = new Audio(silentSoundUrl);
+  hasepiAudio.preload = 'auto';
+  let hasepiOpening = false;
+  let currentHasepiSound = null;
+  let hasepiPlaybackVersion = 0;
+
+  function stopHasepiSound() {
+    hasepiPlaybackVersion++;
+    hasepiAudio.pause();
+    hasepiAudio.currentTime = 0;
+    currentHasepiSound = null;
+  }
+
+  function closeHasepi() {
+    stopHasepiSound();
+    hasepiFrame.hidden = true;
+    hasepiFrame.removeAttribute('src');
+    topPage.hidden = false;
+    siteMenu.hidden = false;
+    siteMenu.querySelector('summary').focus();
+  }
+
+  hasepiLink.addEventListener('click', event => {
+    event.preventDefault();
+    if (hasepiOpening) return;
+    if (isBusy) {
+      menuStatus.textContent = '再生が終わってから、はせぴーを開いてください。';
+      menuStatus.hidden = false;
+      return;
+    }
+    hasepiOpening = true;
+    menuStatus.hidden = true;
+    stopHasepiSound();
+    hasepiAudio.src = silentSoundUrl;
+    // Play an actually silent WAV, unmuted, directly inside the menu click.
+    hasepiAudio.muted = false;
+    hasepiAudio.play().then(() => {
+      stopHasepiSound();
+      hasepiAudio.src = hasepiSoundUrls.boyon;
+      hasepiAudio.load();
+      hasepiFrame.src = 'hasepi.html?embedded=1';
+      hasepiFrame.hidden = false;
+      topPage.hidden = true;
+      siteMenu.open = false;
+      siteMenu.hidden = true;
+      hasepiFrame.focus();
+    }).catch(error => {
+      stopHasepiSound();
+      menuStatus.textContent = '音声を準備できませんでした。もう一度はせぴーを押してください。';
+      menuStatus.hidden = false;
+      console.warn('Hasepi audio activation failed:', error);
+    }).finally(() => { hasepiOpening = false; });
+  });
+
+  window.addEventListener('message', event => {
+    if (event.source !== hasepiFrame.contentWindow || hasepiFrame.hidden) return;
+    const message = event.data;
+    if (!message || message.type !== 'hasepi') return;
+    if (message.action === 'back') {
+      closeHasepi();
+      return;
+    }
+    if (!Object.prototype.hasOwnProperty.call(hasepiSoundUrls, message.sound)) return;
+    if (message.action === 'stop') {
+      if (currentHasepiSound === message.sound) stopHasepiSound();
+    } else if (message.action === 'play') {
+      stopHasepiSound();
+      currentHasepiSound = message.sound;
+      const url = new URL(hasepiSoundUrls[message.sound], document.baseURI).href;
+      if (hasepiAudio.src !== url) hasepiAudio.src = url;
+      const version = hasepiPlaybackVersion;
+      hasepiAudio.play().catch(error => {
+        if (version === hasepiPlaybackVersion) console.warn('Hasepi sound playback failed:', error);
+      });
+    }
+  });
 
   //　button押下時アニメ
   document.querySelectorAll('button').forEach(btn => {

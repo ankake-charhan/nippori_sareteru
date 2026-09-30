@@ -93,71 +93,35 @@ let uv=gl.getUniformLocation(prog,"u_view"),ui=gl.getUniformLocation(prog,"u_img
 gl.uniform2f(ui,IW,IH);
 
 let tex=gl.createTexture(),ready=false;
-const boyonSound=new Audio("resources/sounds/boyon.wav");
-boyonSound.preload="auto";
-const gakoSound=new Audio("resources/sounds/gako.wav");
-gakoSound.preload="auto";
-let tapStart=null,tapMoved=false;
-const audioStates=new Map([boyonSound,gakoSound].map(sound=>[sound,{primed:false,priming:false,version:0}]));
+const embedded=window.parent!==window&&new URLSearchParams(location.search).get("embedded")==="1";
+const boyonSound="boyon",gakoSound="gako";
+const standaloneSounds=embedded?null:{
+ boyon:new Audio("resources/sounds/boyon.wav"),
+ gako:new Audio("resources/sounds/gako.wav")
+};
 
-function primeSound(sound){
- const state=audioStates.get(sound);
- if(state.primed||state.priming||!sound.paused)return;
- state.priming=true;
- const version=++state.version;
- sound.muted=true;
- // Start silently inside the initial touch, before dragging or animation.
- sound.play().then(()=>{
-   if(state.version!==version)return;
-   state.primed=true;
-   sound.pause();
-   sound.currentTime=0;
- }).catch(error=>{
-   if(state.version===version)console.warn("Sound initialization failed:",sound.src,error);
- }).finally(()=>{
-   if(state.version!==version)return;
-   sound.muted=false;
-   state.priming=false;
- });
+function stopSound(name){
+ if(embedded){
+   window.parent.postMessage({type:"hasepi",action:"stop",sound:name},"*");
+ }else{
+   standaloneSounds[name].pause();
+   standaloneSounds[name].currentTime=0;
+ }
 }
 
-function prepareSounds(){
- primeSound(boyonSound);
- primeSound(gakoSound);
+function playSound(name){
+ if(embedded){
+   window.parent.postMessage({type:"hasepi",action:"play",sound:name},"*");
+ }else{
+   stopSound(name);
+   standaloneSounds[name].play().catch(error=>console.warn("Sound playback failed:",name,error));
+ }
 }
 
-function stopSound(sound){
- const state=audioStates.get(sound);
- // Invalidate pending preparation callbacks so they cannot stop real playback.
- state.version++;
- state.priming=false;
- sound.pause();
- sound.currentTime=0;
- sound.muted=false;
-}
-
-function playSound(sound){
- stopSound(sound);
- const state=audioStates.get(sound),version=state.version;
- sound.play().then(()=>{
-   if(state.version===version)state.primed=true;
- }).catch(error=>{
-   if(state.version===version)console.warn("Sound playback failed:",sound.src,error);
- });
-}
-
-cv.addEventListener("touchstart",e=>{
- const touch=e.changedTouches[0];
- if(touch&&!fx&&hit(point(touch)))prepareSounds();
-},{passive:true});
-
-cv.addEventListener("click",()=>{
- const isTap=tapStart&&!tapMoved;
- tapStart=null;
- if(!isTap||fx||pendingHit)return;
- // Like index.html, play directly in a click handler, without awaiting anything.
- prepareSounds();
- playSound(boyonSound);
+document.querySelector(".back-link").addEventListener("click",event=>{
+ if(!embedded)return;
+ event.preventDefault();
+ window.parent.postMessage({type:"hasepi",action:"back"},"*");
 });
 let pull=0,vel=0,drag=false,startY=0,last=performance.now(),S=1,OX=0,OY=0,fx=false,fxUntil=0,pendingHit=false,hadPull=false;
 
@@ -186,25 +150,20 @@ function hit(q){
   return dx*dx+dy*dy<1;
 }
 cv.addEventListener("pointerdown",e=>{
- tapStart={x:e.clientX,y:e.clientY};tapMoved=false;
  let q=point(e);
- if(!fx&&hit(q)&&e.pointerType!=="touch")prepareSounds();
  if(!fx && hit(q)){drag=true;startY=q.y;pull=0;vel=0;hadPull=false;try{cv.setPointerCapture(e.pointerId)}catch(_){}}
 },{passive:false});
 cv.addEventListener("pointermove",e=>{
- if(tapStart&&Math.hypot(e.clientX-tapStart.x,e.clientY-tapStart.y)>8)tapMoved=true;
  e.preventDefault();if(!drag)return;
  pull=Math.max(0,Math.min(300,point(e).y-startY));if(pull>8)hadPull=true;draw();
 },{passive:false});
 function release(e){
- if(e&&e.type==="pointercancel"){tapStart=null;}
  if(!drag)return;
  drag=false;
  pendingHit=hadPull&&(Math.floor(Math.random()*16)===0);
  // Stop the previous bounce sound before deciding which effect to play.
  stopSound(boyonSound);
  if(hadPull&&!pendingHit){
-   tapMoved=true;
    playSound(boyonSound);
  }
  hadPull=false;
