@@ -93,9 +93,9 @@ let uv=gl.getUniformLocation(prog,"u_view"),ui=gl.getUniformLocation(prog,"u_img
 gl.uniform2f(ui,IW,IH);
 
 let tex=gl.createTexture(),ready=false;
-const boyonSound=new Audio("resources/sounds/boyon.mp3");
+const boyonSound=new Audio("resources/sounds/boyon.wav");
 boyonSound.preload="auto";
-const gakoSound=new Audio("resources/sounds/gako.mp3");
+const gakoSound=new Audio("resources/sounds/gako.wav");
 gakoSound.preload="auto";
 let tapStart=null,tapMoved=false,gakoPrimed=false,gakoPriming=false;
 
@@ -110,7 +110,7 @@ function primeGako(){
      gakoSound.pause();
      gakoSound.currentTime=0;
    }
- }).catch(error=>console.warn("gako.mp3 initialization failed:",error))
+ }).catch(error=>console.warn("gako.wav initialization failed:",error))
  .finally(()=>{gakoSound.muted=false;gakoPriming=false;});
 }
 
@@ -121,7 +121,7 @@ cv.addEventListener("click",()=>{
  // Like index.html, play directly in a click handler, without awaiting anything.
  primeGako();
  boyonSound.currentTime=0;
- boyonSound.play().catch(error=>console.warn("boyon.mp3 tap playback failed:",error));
+ boyonSound.play().catch(error=>console.warn("boyon.wav tap playback failed:",error));
 });
 let pull=0,vel=0,drag=false,startY=0,last=performance.now(),S=1,OX=0,OY=0,fx=false,fxUntil=0,pendingHit=false,hadPull=false;
 
@@ -169,7 +169,7 @@ function release(e){
  boyonSound.currentTime=0;
  if(hadPull&&!pendingHit){
    tapMoved=true;
-   boyonSound.play().catch(error=>console.warn("boyon.mp3 drag playback failed:",error));
+   boyonSound.play().catch(error=>console.warn("boyon.wav drag playback failed:",error));
  }
  hadPull=false;
 }
@@ -186,7 +186,7 @@ function startFx(t){
  cv.style.filter="invert(1)";
  gakoSound.muted=false;
  gakoSound.currentTime=0;
- gakoSound.play().catch(error=>console.warn("gako.mp3 playback failed:",error));
+ gakoSound.play().catch(error=>console.warn("gako.wav playback failed:",error));
  if(eyes)eyes.style.display="block";
  draw();
 }
