@@ -1,0 +1,15 @@
+{
+  "browsers": [],
+  "drivers": [],
+  "stats": [
+    {
+      "browser": "microsoftedge",
+      "browser_version": "",
+      "os": "windows",
+      "arch": "amd64",
+      "lang": "python",
+      "selenium_version": "4.23",
+      "stats_ttl": 1790773196
+    }
+  ]
+}
