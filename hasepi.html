@@ -97,6 +97,32 @@ const boyonSound=new Audio("resources/sounds/boyon.mp3");
 boyonSound.preload="auto";
 const gakoSound=new Audio("resources/sounds/gako.mp3");
 gakoSound.preload="auto";
+let tapStart=null,tapMoved=false,gakoPrimed=false,gakoPriming=false;
+
+function primeGako(){
+ if(gakoPrimed||gakoPriming)return;
+ gakoPriming=true;
+ gakoSound.muted=true;
+ // Start this element within the same real click as the audible tap sound.
+ gakoSound.play().then(()=>{
+   gakoPrimed=true;
+   if(gakoSound.muted){
+     gakoSound.pause();
+     gakoSound.currentTime=0;
+   }
+ }).catch(error=>console.warn("gako.mp3 initialization failed:",error))
+ .finally(()=>{gakoSound.muted=false;gakoPriming=false;});
+}
+
+cv.addEventListener("click",()=>{
+ const isTap=tapStart&&!tapMoved;
+ tapStart=null;
+ if(!isTap||fx||pendingHit)return;
+ // Like index.html, play directly in a click handler, without awaiting anything.
+ primeGako();
+ boyonSound.currentTime=0;
+ boyonSound.play().catch(error=>console.warn("boyon.mp3 tap playback failed:",error));
+});
 let pull=0,vel=0,drag=false,startY=0,last=performance.now(),S=1,OX=0,OY=0,fx=false,fxUntil=0,pendingHit=false,hadPull=false;
 
 function resize(){
@@ -124,15 +150,17 @@ function hit(q){
   return dx*dx+dy*dy<1;
 }
 cv.addEventListener("pointerdown",e=>{
- e.preventDefault();let q=point(e);
+ tapStart={x:e.clientX,y:e.clientY};tapMoved=false;
+ let q=point(e);
  if(!fx && hit(q)){drag=true;startY=q.y;pull=0;vel=0;hadPull=false;try{cv.setPointerCapture(e.pointerId)}catch(_){}}
 },{passive:false});
 cv.addEventListener("pointermove",e=>{
+ if(tapStart&&Math.hypot(e.clientX-tapStart.x,e.clientY-tapStart.y)>8)tapMoved=true;
  e.preventDefault();if(!drag)return;
  pull=Math.max(0,Math.min(300,point(e).y-startY));if(pull>8)hadPull=true;draw();
 },{passive:false});
 function release(e){
- if(e)e.preventDefault();
+ if(e&&e.type==="pointercancel"){tapStart=null;}
  if(!drag)return;
  drag=false;
  pendingHit=hadPull&&(Math.floor(Math.random()*16)===0);
@@ -140,7 +168,8 @@ function release(e){
  boyonSound.pause();
  boyonSound.currentTime=0;
  if(hadPull&&!pendingHit){
-   boyonSound.play().catch(error=>console.warn("boyon.mp3 ??????????:",error));
+   tapMoved=true;
+   boyonSound.play().catch(error=>console.warn("boyon.mp3 drag playback failed:",error));
  }
  hadPull=false;
 }
@@ -155,8 +184,9 @@ function startFx(t){
  // Start the recovery timer first, so even a visual-effect error cannot lock the app.
  fxTimer=setTimeout(stopFx,5000);
  cv.style.filter="invert(1)";
+ gakoSound.muted=false;
  gakoSound.currentTime=0;
- gakoSound.play().catch(error=>console.warn("gako.mp3 ??????????:",error));
+ gakoSound.play().catch(error=>console.warn("gako.mp3 playback failed:",error));
  if(eyes)eyes.style.display="block";
  draw();
 }
